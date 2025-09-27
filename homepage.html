@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nearby Foodies — Explore Local Eats</title>
+  <meta name="description" content="Discover nearby restaurants and food stalls" />
+  <style>
+    /* ---------- Root theme ---------- */
+    :root{
+      --red: #e63946;
+      --yellow: #ffd166;
+      --deep: #212121;
+      --muted: #6b6b6b;
+      --glass: rgba(255,255,255,0.85);
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      --radius: 14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* ---------- Reset ---------- */n
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body,#app{height:100%}
+    body{background:linear-gradient(180deg,var(--yellow),#fff);color:var(--deep);}
+
+    /* ---------- Hero / Background ---------- */
+    .hero{
+      position:relative;min-height:70vh;display:flex;align-items:center;justify-content:center;padding:48px 20px;overflow:hidden;
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.5)), url('https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=6b41b9c6a06f1d0b84c9a3b8eec6b7a5');
+      background-size:cover;background-position:center center; border-bottom: 4px solid rgba(0,0,0,0.06);
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(230,57,70,0.15), rgba(255,209,102,0.14));mix-blend-mode:multiply}
+
+    .container{width:1200px;max-width:96%;margin:0 auto;position:relative;z-index:2}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+    .logo{display:flex;gap:12px;align-items:center;font-weight:700;letter-spacing:0.4px}
+    .logo .mark{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--red),var(--yellow));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;box-shadow:var(--card-shadow)}
+
+    /* ---------- Search / Call to action ---------- */
+    .hero-grid{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:center}
+    .hero-left{padding:28px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));box-shadow:var(--card-shadow)}
+    h1{font-size:clamp(28px,4.2vw,44px);margin-bottom:8px}
+    p.lead{color:var(--muted);margin-bottom:18px}
+
+    .search-box{display:flex;gap:10px}
+    .search-box input{flex:1;padding:14px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);outline:none;font-size:15px}
+    .search-box button{background:linear-gradient(90deg,var(--red),#ff8b3d);border:none;color:white;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(230,57,70,0.18);transition:transform .18s ease}
+    .search-box button:hover{transform:translateY(-3px)}
+
+    .quick-filters{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .chip{background:rgba(0,0,0,0.04);padding:8px 12px;border-radius:999px;font-size:13px;cursor:pointer;transition:transform .14s ease}
+    .chip:hover{transform:translateY(-3px)}
+    .chip.active{background:linear-gradient(90deg,var(--yellow),var(--red));color:white;box-shadow:0 8px 20px rgba(0,0,0,0.12)}
+
+    /* ---------- Right card: login/featured ---------- */
+    .panel{background:var(--glass);padding:18px;border-radius:12px;box-shadow:var(--card-shadow);backdrop-filter:blur(6px)}
+    .panel h3{margin-bottom:8px}
+    .login-cta{display:flex;gap:8px;align-items:center}
+    .btn{padding:10px 12px;border-radius:10px;border:none;cursor:pointer}
+    .btn-outline{background:transparent;border:1px solid rgba(0,0,0,0.08)}
+
+    /* ---------- Restaurants grid ---------- */
+    .section{padding:32px 0}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media (max-width:980px){.hero-grid{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:640px){.grid{grid-template-columns:1fr}.hero{min-height:60vh}}
+
+    .card{background:white;border-radius:12px;overflow:hidden;box-shadow:var(--card-shadow);transition:transform .22s ease, box-shadow .22s ease}
+    .card:hover{transform:translateY(-8px);box-shadow:0 24px 40px rgba(0,0,0,0.18)}
+    .card .thumb{height:160px;background-size:cover;background-position:center}
+    .card-body{padding:12px}
+    .card h4{font-size:16px;margin-bottom:6px}
+    .meta{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+
+    .rating{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0.9));font-weight:700}
+
+    /* ---------- Small animations ---------- */
+    @keyframes floatUp{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+    .badge{display:inline-block;padding:10px 14px;border-radius:999px;background:linear-gradient(90deg,var(--red),#ff9b57);color:white;font-weight:700;animation:floatUp 3s ease-in-out infinite}
+
+    /* ---------- Footer ---------- */
+    footer{padding:28px 0;color:var(--muted)}
+
+    /* ---------- Modal (login) ---------- */
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:60;opacity:0;visibility:hidden;transition:opacity .18s ease, visibility .18s}
+    .modal.open{opacity:1;visibility:visible}
+    .modal-card{background:white;padding:18px;border-radius:12px;width:420px;max-width:94%;box-shadow:0 30px 60px rgba(0,0,0,0.35)}
+    .form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* ---------- Micro interactions ---------- */
+    .explore-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+    .explore-card{padding:14px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.8),rgba(255,255,255,0.95));display:flex;align-items:center;gap:12px}
+    .explore-card img{width:56px;height:56px;border-radius:10px;object-fit:cover}
+
+    /* tiny responsive */
+    @media (max-width:640px){.explore-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <section class="hero" role="banner">
+      <div class="container">
+        <div class="topbar">
+          <div class="logo" aria-label="Nearby Foodies logo">
+            <div class="mark">NF</div>
+            <div>
+              <div style="font-size:15px">Nearby Foodies</div>
+              <div style="font-size:12px;color:var(--muted)">Discover local restaurants & stalls</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-outline" id="openLogin">Login</button>
+            <button class="btn" id="exploreBtn" style="background:linear-gradient(90deg,var(--red),var(--yellow));color:white">Explore</button>
+          </div>
+        </div>
+
+        <div class="hero-grid" style="margin-top:18px">
+          <div class="hero-left">
+            <h1>Hungry? Find the best local food near you.</h1>
+            <p class="lead">Browse restaurants, stalls, and street food — curated for taste and distance. Filter by cuisine, price, and ratings.</p>
+
+            <div class="search-box" role="search">
+              <input id="searchInput" placeholder="Search for restaurant, dish or locality (e.g., biryani, bakery, MG Road)" />
+              <button id="searchBtn">Search</button>
+            </div>
+
+            <div class="quick-filters" aria-hidden="false" id="filterRow">
+              <div class="chip active" data-filter="all">All</div>
+              <div class="chip" data-filter="veg">Veg</div>
+              <div class="chip" data-filter="nonveg">Non-veg</div>
+              <div class="chip" data-filter="street">Street Food</div>
+              <div class="chip" data-filter="dessert">Dessert</div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
+              <div class="badge">Top Rated</div>
+              <div class="small">Open now • Delivery • Table booking</div>
+            </div>
+          </div>
+
+          <aside class="panel">
+            <h3>Welcome</h3>
+            <p class="small">Sign in to save favorites, book a table, and leave reviews.</p>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+              <button class="btn" id="quickLogin" style="background:linear-gradient(90deg,var(--yellow),var(--red));font-weight:700">Quick sign</button>
+              <button class="btn btn-outline" id="learnMore">How it works</button>
+            </div>
+
+            <div style="margin-top:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div style="font-weight:700">Featured</div>
+                <div class="small">Because you love spicy!</div>
+              </div>
+              <div class="explore-grid">
+                <div class="explore-card"><img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800&auto=format&fit=crop&s=6f1d0d8ad5a4877a" alt="kebab"><div><strong>Kebabs</strong><div class="small">Grilled & spicy</div></div></div>
+                <div class="explore-card"><img src="https://images.unsplash.com/photo-1543352634-5d3b8f0045c2?q=80&w=800&auto=format&fit=crop&s=4fd7a9b7e2c8c0e2" alt="sweets"><div><strong>Sweets</strong><div class="small">Desserts & mithai</div></div></div>
+                <div class="explore-card"><img src="https://images.unsplash.com/photo-1512058564366-c9e3f046fbe3?q=80&w=800&auto=format&fit=crop&s=7f8a4c8f1628a6f8" alt="chai"><div><strong>Chai & Snacks</strong><div class="small">Perfect chai breaks</div></div></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <main class="container">
+      <section class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <h2 style="margin-bottom:6px">Popular near you</h2>
+            <div class="small">Showing top picks from nearby vendors</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="sort" style="padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+              <option value="popular">Most popular</option>
+              <option value="rating">Highest rated</option>
+              <option value="distance">Nearest</option>
+            </select>
+            <button class="btn btn-outline" id="viewMap">View map</button>
+          </div>
+        </div>
+
+        <div class="grid" id="cardsRow">
+          <!-- Cards inserted by JS -->
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Why Nearby Foodies?</h3>
+        <p class="small">We curate local stalls and restaurants with brief menus, opening hours and honest ratings. Perfect for exploring when you're short on time or want to try something new.</p>
+      </section>
+
+      <footer>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div class="small">© Nearby Foodies — Made with ❤️</div>
+          <div class="small">Theme: Yellow & Red • Demo UI</div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal login -->
+  <div class="modal" id="loginModal" role="dialog" aria-hidden="true">
+    <div class="modal-card" role="document">
+      <h3>Sign in</h3>
+      <div class="form-row">
+        <label>Email or phone</label>
+        <input id="emailField" placeholder="you@example.com" />
+      </div>
+      <div class="form-row">
+        <label>Password</label>
+        <input id="passField" type="password" placeholder="at least 6 characters" />
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" id="cancelLogin">Cancel</button>
+        <button class="btn" id="doLogin" style="background:linear-gradient(90deg,var(--red),var(--yellow));color:white">Sign in</button>
+      </div>
+      <div style="margin-top:10px" class="small">This demo uses a local demo login (not secure). For production, plug in your backend auth.</div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Demo data ----------
+    const sample = [
+      {id:1,name:'Raju Biryani',cuisine:'Biryani',img:'https://images.unsplash.com/photo-1604908177522-4d2e6f5a4b94?q=80&w=800&auto=format&fit=crop&s=4c8c8fc3b7c2',rating:4.7,type:'nonveg',distance:1.2},
+      {id:2,name:'Sweet Junction',cuisine:'Dessert',img:'https://images.unsplash.com/photo-1528716321689-4a3b6d87c6d8?q=80&w=800&auto=format&fit=crop&s=2f5036c4436b',rating:4.5,type:'veg',distance:2.1},
+      {id:3,name:'Street Kebab',cuisine:'Kebab',img:'https://images.unsplash.com/photo-1555993539-1732f2af3d7f?q=80&w=800&auto=format&fit=crop&s=7b9a3f5a8b2c',rating:4.6,type:'nonveg',distance:0.6},
+      {id:4,name:'Green Leaf',cuisine:'South Indian',img:'https://images.unsplash.com/photo-1604908177609-1b9f8f246d87?q=80&w=800&auto=format&fit=crop&s=abc1234',rating:4.3,type:'veg',distance:1.8},
+      {id:5,name:'Quick Chai',cuisine:'Tea & Snacks',img:'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800&auto=format&fit=crop&s=6f1d0d8ad5a4877a',rating:4.1,type:'veg',distance:0.3},
+      {id:6,name:'Paneer Palace',cuisine:'Punjabi',img:'https://images.unsplash.com/photo-1604908177620-8f52c1da6b2b?q=80&w=800&auto=format&fit=crop&s=b2c2a3d',rating:4.4,type:'veg',distance:2.3}
+    ];
+
+    // ---------- Helpers ----------
+    const cardsRow = document.getElementById('cardsRow');
+    function renderCards(list){
+      cardsRow.innerHTML = '';
+      for(const r of list){
+        const el = document.createElement('article');
+        el.className = 'card';
+        el.innerHTML = `
+          <div class="thumb" style="background-image:url('${r.img}')"></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <h4>${r.name}</h4>
+              <div class="rating">⭐ ${r.rating}</div>
+            </div>
+            <div class="meta">${r.cuisine} • ${r.distance} km away</div>
+          </div>
+        `;
+        cardsRow.appendChild(el);
+      }
+    }
+
+    // initial
+    renderCards(sample);
+
+    // ---------- Search & filters ----------
+    document.getElementById('searchBtn').addEventListener('click', ()=> {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = sample.filter(s => s.name.toLowerCase().includes(q) || s.cuisine.toLowerCase().includes(q));
+      renderCards(filtered.length?filtered:sample);
+    });
+
+    document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', (e)=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      const f = e.currentTarget.dataset.filter;
+      if(f === 'all') renderCards(sample);
+      else renderCards(sample.filter(x => (f==='street' ? x.cuisine.toLowerCase().includes('kebab') : x.type===f || x.cuisine.toLowerCase().includes(f))));
+    }));
+
+    // ---------- Sorting ----------
+    document.getElementById('sort').addEventListener('change', (e)=>{
+      const val = e.target.value;
+      const copy = [...sample];
+      if(val==='rating') copy.sort((a,b)=>b.rating-a.rating);
+      if(val==='distance') copy.sort((a,b)=>a.distance-b.distance);
+      renderCards(copy);
+    });
+
+    // ---------- Modal login logic (demo only) ----------
+    const modal = document.getElementById('loginModal');
+    const openLogin = document.getElementById('openLogin');
+    const cancel = document.getElementById('cancelLogin');
+    const doLogin = document.getElementById('doLogin');
+
+    openLogin.addEventListener('click', ()=>{ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); });
+    cancel.addEventListener('click', ()=>{ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); });
+    doLogin.addEventListener('click', ()=>{
+      const email = document.getElementById('emailField').value.trim();
+      const pass = document.getElementById('passField').value;
+      if(!email || pass.length < 3){ alert('Enter a valid email/phone and password (demo)'); return; }
+      // Demo: store user in localStorage
+      localStorage.setItem('nf_user', JSON.stringify({email,when:Date.now()}));
+      modal.classList.remove('open'); modal.setAttribute('aria-hidden','true');
+      alert('Signed in (demo). Favorites & bookings will show here when backend is connected.');
+    });
+
+    // Quick login
+    document.getElementById('quickLogin').addEventListener('click', ()=>{ document.getElementById('emailField').value = 'demo@user.com'; document.getElementById('passField').value = 'demo123'; modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); });
+
+    // Explore button scroll to cards
+    document.getElementById('exploreBtn').addEventListener('click', ()=>{ window.scrollTo({top: document.querySelector('main').offsetTop-20, behavior:'smooth'}); });
+
+    // small keyboard shortcut: press / to focus search
+    window.addEventListener('keydown', (e)=>{ if(e.key === '/') { e.preventDefault(); document.getElementById('searchInput').focus(); } });
+
+    // indicate login state in topbar
+    function updateTopbar(){
+      const user = JSON.parse(localStorage.getItem('nf_user')||'null');
+      if(user){
+        openLogin.textContent = 'Profile';
+        openLogin.removeEventListener('click', ()=>{});
+        openLogin.addEventListener('click', ()=>{ alert('Demo profile:\n'+user.email); });
+      }
+    }
+    updateTopbar();
+
+  </script>
+</body>
+</html>
